@@ -493,6 +493,11 @@ pub const Surface = struct {
         if (opts.working_directory) |c_wd| {
             const wd = std.mem.sliceTo(c_wd, 0);
             if (wd.len > 0) wd: {
+                if (comptime builtin.os.tag == .visionos) {
+                    config.@"working-directory" = wd;
+                    break :wd;
+                }
+
                 var dir = std.fs.openDirAbsolute(wd, .{}) catch |err| {
                     log.warn(
                         "error opening requested working directory dir={s} err={}",

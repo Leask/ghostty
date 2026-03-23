@@ -7,6 +7,7 @@ const args = @import("args.zig");
 const diagnostics = @import("diagnostics.zig");
 const lib = @import("../lib/main.zig");
 const homedir = @import("../os/homedir.zig");
+const path_max_bytes = @import("../os/path_max.zig").bytes;
 
 pub const Options = struct {
     /// This is set by the CLI parser for deinit.
@@ -61,9 +62,9 @@ pub const Options = struct {
             if (std.mem.eql(u8, stripped, "home")) return try alloc.dupeZ(u8, arg);
             if (std.mem.eql(u8, stripped, "inherit")) return try alloc.dupeZ(u8, arg);
             const cwd: std.fs.Dir = std.fs.cwd();
-            var expandhome_buf: [std.fs.max_path_bytes]u8 = undefined;
+            var expandhome_buf: [path_max_bytes]u8 = undefined;
             const expanded = try homedir.expandHome(stripped, &expandhome_buf);
-            var realpath_buf: [std.fs.max_path_bytes]u8 = undefined;
+            var realpath_buf: [path_max_bytes]u8 = undefined;
             const realpath = try cwd.realpath(expanded, &realpath_buf);
             self._working_directory_seen = true;
             return try std.fmt.allocPrintSentinel(alloc, "--working-directory={s}", .{realpath}, 0);
@@ -196,7 +197,7 @@ fn runArgs(
     if (!opts._working_directory_seen) {
         const alloc = opts._arena.?.allocator();
         const cwd: std.fs.Dir = std.fs.cwd();
-        var buf: [std.fs.max_path_bytes]u8 = undefined;
+        var buf: [path_max_bytes]u8 = undefined;
         const wd = try cwd.realpath(".", &buf);
         try opts._arguments.append(alloc, try std.fmt.allocPrintSentinel(alloc, "--working-directory={s}", .{wd}, 0));
     }
